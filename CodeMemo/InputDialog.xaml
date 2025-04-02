@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CodeMemo"
         mc:Ignorable="d"
-        Title="Enter Language Name" Height="153" Width="300"
+        Title="Enter Name" Height="153" Width="300"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         KeyDown="Window_KeyDown">
     <Grid>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10" FontSize="16">Enter Language Name</TextBlock>
-        <TextBox x:Name="LanguageNameTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10,40,10,10" FontSize="14" />
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10" FontSize="16" Text="Enter Name"/>
+        <TextBox x:Name="NameTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10,40,10,10" FontSize="14" />
         <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="75" Margin="0,0,0,10" Click="OkButton_Click"/>
     </Grid>
 </Window>

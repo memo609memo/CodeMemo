@@ -40,7 +40,7 @@
 
             <ScrollViewer Grid.Column="0" Grid.Row="1"
                           x:Name="LanguageScrollViewer"
-                          VerticalScrollBarVisibility="Auto">
+                          VerticalScrollBarVisibility="Hidden">
                 <StackPanel x:Name="LanguagesStackPanel"
                             Orientation="Vertical">
                     <Button Grid.Column="0" Grid.Row="0"
@@ -48,6 +48,32 @@
                             Background="Transparent"
                             BorderBrush="Transparent"
                             Click="CreateLanguageBoxButton_Click"
+                            Margin="10" 
+                            Height="39" 
+                            Width="130"
+                            HorizontalAlignment="Left"
+                            Cursor="Hand">
+                        <Button.Content>
+                            <Image Source="Images/createButton.PNG" 
+                                   Height="34" 
+                                   Width="124" 
+                                   HorizontalAlignment="Center"/>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+
+
+            <ScrollViewer Grid.Column="1" Grid.Row="1"
+                          x:Name="FunctionsScrollViewer"
+                          VerticalScrollBarVisibility="Hidden">
+                <StackPanel x:Name="FunctionsStackPanel"
+                            Orientation="Vertical">
+                    <Button Grid.Column="0" Grid.Row="0"
+                            x:Name="AddFunctionButton"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Click="CreateFunctionBoxButton_Click"
                             Margin="10" 
                             Height="39" 
                             Width="130"

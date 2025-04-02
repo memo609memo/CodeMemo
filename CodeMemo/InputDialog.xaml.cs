@@ -16,7 +16,7 @@ namespace CodeMemo
 {
     public partial class InputDialog : Window
     {
-        public string LanguageName { get; set; }
+        public string newBoxName { get; set; }
 
         public InputDialog()
         {
@@ -27,14 +27,14 @@ namespace CodeMemo
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            LanguageNameTextBox.Focus();  // Set focus to the TextBox
+            NameTextBox.Focus();  // Set focus to the TextBox
         }
 
         // Handle the OK button click to return the input
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             // Get the entered language name and close the dialog
-            LanguageName = LanguageNameTextBox.Text;
+            newBoxName = NameTextBox.Text;
             this.DialogResult = true;
         }
 
@@ -44,7 +44,7 @@ namespace CodeMemo
             // Check if the Enter key was pressed
             if (e.Key == Key.Enter)
             {
-                LanguageName = LanguageNameTextBox.Text;  // Get the language name
+                newBoxName = NameTextBox.Text;  // Get the language name
                 this.DialogResult = true;  // Close the dialog with the result
             }
         }
