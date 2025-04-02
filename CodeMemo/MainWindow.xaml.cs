@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -10,17 +11,30 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.IO;
+using System.Text.Json;
 
 namespace CodeMemo
 {
+
+
+
     public partial class MainWindow : Window
     {
-        //Main Funcs
+        public class LanguageData
+        {
+            public List<string> Languages { get; set; } = new List<string>();
+        }
 
+
+        //Main Funcs
+        private string languageFilePath = "languages.json";
+        private LanguageData languageData = new LanguageData();
 
         public MainWindow()
         {
             InitializeComponent();
+            LoadLanguages();
         }
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -41,17 +55,23 @@ namespace CodeMemo
         private void CreateLanguageBoxButton_Click(object sender, RoutedEventArgs e)
         {
             InputDialog inputDialog = new InputDialog();
-            bool? result = inputDialog.ShowDialog(); 
+            bool? result = inputDialog.ShowDialog();
 
-            if (result == true) 
+            if (result == true)
             {
-                string languageName = inputDialog.newBoxName; 
+                string languageName = inputDialog.newBoxName;
                 CreateLanguageBox(languageName);
             }
         }
 
         private void CreateLanguageBox(string languageName)
         {
+            if (!languageData.Languages.Contains(languageName))
+            {
+                languageData.Languages.Add(languageName);
+                SaveLanguages();
+            }
+
             Image languageImage = new Image
             {
                 Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative)),
@@ -87,7 +107,6 @@ namespace CodeMemo
             languageBoxContent.Children.Add(languageImage);
             languageBoxContent.Children.Add(languageLabel);
 
-            // Create the options button and attach the click event
             Button optionsButton = new Button
             {
                 Background = Brushes.Transparent,
@@ -101,16 +120,69 @@ namespace CodeMemo
             };
 
             optionsButton.Style = (Style)Application.Current.Resources["CustomButtonStyle"];
-            optionsButton.Click += (s, e) => ShowLanguageOptions(optionsButton, languageBoxContent); // Pass the button and the container
+            optionsButton.Click += (s, e) => ShowLanguageOptions(optionsButton, languageBoxContent);
 
             languageBoxContent.Children.Add(optionsButton);
-
-            // Insert the language box content into the StackPanel
             LanguagesStackPanel.Children.Insert(LanguagesStackPanel.Children.Count - 1, languageBoxContent);
-
             LanguageScrollViewer.ScrollToBottom();
         }
 
+        private void SaveLanguages()
+        {
+            try
+            {
+                string json = JsonSerializer.Serialize(languageData, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(languageFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving languages: {ex.Message}");
+            }
+        }
+
+        private void LoadLanguages()
+        {
+            if (File.Exists(languageFilePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(languageFilePath);
+                    languageData = JsonSerializer.Deserialize<LanguageData>(json) ?? new LanguageData();
+
+                    foreach (var language in languageData.Languages)
+                    {
+                        CreateLanguageBox(language);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading languages: {ex.Message}");
+                }
+            }
+        }
+
+        private void DeleteLanguage(Grid languageBoxContent)
+        {
+            TextBox languageLabel = languageBoxContent.Children.OfType<TextBox>().FirstOrDefault();
+            StackPanel optionsMenu = languageBoxContent.Children.OfType<StackPanel>().LastOrDefault();
+            if (languageLabel != null)
+            {
+                string languageName = languageLabel.Text;
+
+                // Remove the language from the data list
+                languageData.Languages.Remove(languageName);
+                SaveLanguages(); // Save the updated list
+
+                // Hide the options menu
+                if (optionsMenu != null)
+                {
+                    optionsMenu.Visibility = Visibility.Collapsed;
+                }
+
+                // Remove the language from the UI
+                LanguagesStackPanel.Children.Remove(languageBoxContent);
+            }
+        }
         private void ShowLanguageOptions(Button optionsButton, Grid languageBoxContent)
         {
             Popup optionsPopup = new Popup
@@ -192,7 +264,6 @@ namespace CodeMemo
 
         private void RenameLanguage(Grid languageBoxContent)
         {
-
             // Close the menu
             StackPanel optionsMenu = languageBoxContent.Children.OfType<StackPanel>().LastOrDefault();
             if (optionsMenu != null)
@@ -206,30 +277,24 @@ namespace CodeMemo
             {
                 string newLanguageName = inputDialog.newBoxName;
 
+                // Find the current language name in the label
                 TextBox languageLabel = languageBoxContent.Children.OfType<TextBox>().FirstOrDefault();
                 if (languageLabel != null)
                 {
+                    // Update the label text in the UI
+                    string oldLanguageName = languageLabel.Text;
                     languageLabel.Text = newLanguageName;
+
+                    // Update the language data list
+                    int index = languageData.Languages.IndexOf(oldLanguageName);
+                    if (index >= 0)
+                    {
+                        languageData.Languages[index] = newLanguageName;
+                        SaveLanguages(); // Save the updated list
+                    }
                 }
             }
         }
-
-        private void DeleteLanguage(Grid languageBoxContent)
-        {
-
-            // Close the menu
-            StackPanel optionsMenu = languageBoxContent.Children.OfType<StackPanel>().LastOrDefault();
-            if (optionsMenu != null)
-            {
-                optionsMenu.Visibility = Visibility.Collapsed;
-            }
-
-            // Remove the language box content
-            LanguagesStackPanel.Children.Remove(languageBoxContent);
-        }
-
-
-
 
 
 
@@ -316,7 +381,7 @@ namespace CodeMemo
             {
                 PlacementTarget = optionsButton,
                 Placement = PlacementMode.Bottom,
-                StaysOpen = false, 
+                StaysOpen = false,
                 AllowsTransparency = true,
                 PopupAnimation = PopupAnimation.Fade
             };
@@ -370,7 +435,7 @@ namespace CodeMemo
 
             clickOutsideHandler = (s, e) =>
             {
-                if (!optionsMenu.IsMouseOver) 
+                if (!optionsMenu.IsMouseOver)
                 {
                     optionsPopup.IsOpen = false;
                 }
