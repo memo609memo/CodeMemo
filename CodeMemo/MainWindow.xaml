@@ -5,8 +5,70 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CodeMemo"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1064" Height="616">
-    <Grid>
+        Width="1064" Height="616"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        AllowsTransparency="True"
+        WindowStartupLocation="CenterScreen"
+        >
+    <Border
+        CornerRadius="25" 
+        BorderBrush="#FFFFFF"
+        BorderThickness="3">
 
-    </Grid>
+        <Border.Background>
+            <ImageBrush ImageSource="Images/BG.PNG"></ImageBrush>
+        </Border.Background>
+
+
+        <Grid>
+
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="154" />
+                <ColumnDefinition Width="165" />
+                <ColumnDefinition Width="568*" />
+                <ColumnDefinition Width="171*"/>
+
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="119"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+
+
+            <Button Grid.Column="3" Grid.Row="0"
+                x:Name="MinimizeButton"
+                Width="23" Height="21"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                Click="MinimizeButton_Click"
+                Cursor="Hand"
+                ToolTip="Minimize"
+                Opacity="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,12,53,0"/>
+
+            <Button Grid.Column="3" Grid.Row="0"
+                x:Name="CloseButton"
+                Width="22" Height="21"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                Click="CloseButton_Click"
+                Cursor="Hand"
+                ToolTip="Close"
+                Opacity="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,12,13,0"/>
+
+
+        </Grid>
+
+    </Border>
+
 </Window>

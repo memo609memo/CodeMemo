@@ -9,12 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\BG.PNG" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="MVVM\View\" />
     <Folder Include="MVVM\ViewModel\" />
     <Folder Include="MVVM\Model\" />
     <Folder Include="Theme\" />
     <Folder Include="Fonts\" />
-    <Folder Include="Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\BG.PNG" />
   </ItemGroup>
 
 </Project>
