@@ -1,0 +1,17 @@
+﻿<Window x:Class="CodeMemo.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CodeMemo"
+        mc:Ignorable="d"
+        Title="Enter Language Name" Height="153" Width="300"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        KeyDown="Window_KeyDown">
+    <Grid>
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10" FontSize="16">Enter Language Name</TextBlock>
+        <TextBox x:Name="LanguageNameTextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10,40,10,10" FontSize="14" />
+        <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="75" Margin="0,0,0,10" Click="OkButton_Click"/>
+    </Grid>
+</Window>

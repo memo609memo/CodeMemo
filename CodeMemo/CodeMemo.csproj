@@ -9,8 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Fonts\Kalam-Regular.ttf" />
     <None Remove="Images\BG.PNG" />
     <None Remove="Images\createButton.PNG" />
+    <None Remove="Images\selectedButton.PNG" />
+    <None Remove="Images\unselectedButton.PNG" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,12 +21,14 @@
     <Folder Include="MVVM\ViewModel\" />
     <Folder Include="MVVM\Model\" />
     <Folder Include="Theme\" />
-    <Folder Include="Fonts\" />
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Fonts\Kalam-Regular.ttf" />
     <Resource Include="Images\BG.PNG" />
     <Resource Include="Images\createButton.PNG" />
+    <Resource Include="Images\selectedButton.PNG" />
+    <Resource Include="Images\unselectedButton.PNG" />
   </ItemGroup>
 
 </Project>

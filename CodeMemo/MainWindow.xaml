@@ -38,39 +38,31 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="1"
-                x:Name="CreateLanguageBoxButton"
-                Background="Transparent"
-                BorderBrush="Transparent"
-                Cursor="Hand"
-                ToolTip="Create New Language Box"
-                Width="128" Height="39"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Margin="0,10,0,0">
-                <!--Click="CreateLanguageBoxButton_Click"-->
+            <ScrollViewer Grid.Column="0" Grid.Row="1"
+                          x:Name="LanguageScrollViewer"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="LanguagesStackPanel"
+                            Orientation="Vertical">
+                    <Button Grid.Column="0" Grid.Row="0"
+                            x:Name="AddLanguageButton"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Click="CreateLanguageBoxButton_Click"
+                            Margin="10" 
+                            Height="39" 
+                            Width="130"
+                            HorizontalAlignment="Left"
+                            Cursor="Hand">
+                        <Button.Content>
+                            <Image Source="Images/createButton.PNG" 
+                                   Height="34" 
+                                   Width="124" 
+                                   HorizontalAlignment="Center"/>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
 
-                <Image x:Name="ButtonImage" 
-                       Source="Images/createButton.PNG"/>
-
-            </Button>
-
-            <Button Grid.Column="1" Grid.Row="1"
-                    x:Name="CreateFunctionBoxButton"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
-                    Cursor="Hand"
-                    ToolTip="Create New Language Box"
-                    Width="130" Height="39"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Margin="0,10,0,0">
-                <!--Click="CreateFunctionBoxButton_Click" -->
-                <Image x:Name="ButtonImage2" 
-                       Source="Images/createButton.PNG">
-                </Image>
-
-            </Button>
 
             <Button Grid.Column="3" Grid.Row="0"
                 x:Name="MinimizeButton"
