@@ -16,11 +16,13 @@ namespace CodeMemo
 {
     public partial class InputDialog : Window
     {
+        private List<string> existingLanguages;  // List to hold existing language names
         public string newBoxName { get; set; }
-
-        public InputDialog()
+        // Constructor now accepts a list of existing languages from the JSON
+        public InputDialog(List<string> existingLanguages)
         {
             InitializeComponent();
+            this.existingLanguages = existingLanguages;
         }
 
         // Automatically focus the TextBox when the dialog is shown
@@ -33,9 +35,7 @@ namespace CodeMemo
         // Handle the OK button click to return the input
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // Get the entered language name and close the dialog
-            newBoxName = NameTextBox.Text;
-            this.DialogResult = true;
+            ValidateAndCloseDialog();
         }
 
         // Handle the Enter key press
@@ -44,9 +44,32 @@ namespace CodeMemo
             // Check if the Enter key was pressed
             if (e.Key == Key.Enter)
             {
-                newBoxName = NameTextBox.Text;  // Get the language name
-                this.DialogResult = true;  // Close the dialog with the result
+                ValidateAndCloseDialog();
             }
+        }
+
+        // Validate the input and close the dialog if valid
+        private void ValidateAndCloseDialog()
+        {
+            string inputName = NameTextBox.Text.Trim();
+
+            // Check if the input is null or empty
+            if (string.IsNullOrEmpty(inputName))
+            {
+                MessageBox.Show("Name cannot be empty.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Check if the name already exists in the existing languages from the JSON
+            if (existingLanguages.Contains(inputName))
+            {
+                MessageBox.Show("This name is already in use. Please choose a different name.", "Name Taken", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // If validation passes, set the newBoxName and close the dialog
+            newBoxName = inputName;
+            this.DialogResult = true;
         }
     }
 }

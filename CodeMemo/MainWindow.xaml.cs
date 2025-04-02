@@ -54,7 +54,7 @@ namespace CodeMemo
 
         private void CreateLanguageBoxButton_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog inputDialog = new InputDialog();
+            InputDialog inputDialog = new InputDialog(languageData.Languages);
             bool? result = inputDialog.ShowDialog();
 
             if (result == true)
@@ -272,7 +272,7 @@ namespace CodeMemo
             }
 
             // Open the rename dialog and update the label
-            InputDialog inputDialog = new InputDialog();
+            InputDialog inputDialog = new InputDialog(languageData.Languages);
             if (inputDialog.ShowDialog() == true)
             {
                 string newLanguageName = inputDialog.newBoxName;
@@ -306,7 +306,7 @@ namespace CodeMemo
 
         private void CreateFunctionBoxButton_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog inputDialog = new InputDialog();
+            InputDialog inputDialog = new InputDialog(new List<string>());
             bool? result = inputDialog.ShowDialog();
 
             if (result == true)
@@ -460,7 +460,7 @@ namespace CodeMemo
                 optionsMenu.Visibility = Visibility.Collapsed;
             }
 
-            InputDialog inputDialog = new InputDialog();
+            InputDialog inputDialog = new InputDialog(new List<string>());
             if (inputDialog.ShowDialog() == true)
             {
                 string newFunctionName = inputDialog.newBoxName;
