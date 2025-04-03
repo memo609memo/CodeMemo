@@ -162,7 +162,11 @@ namespace CodeMemo
                 AddFunctionButton.Visibility = Visibility.Visible;
             };
 
-
+            // Add right-click event handler
+            languageBoxContent.MouseRightButtonDown += (s, e) =>
+            {
+                ShowLanguageContextMenu(languageBoxContent);
+            };
 
             LanguagesStackPanel.Children.Insert(LanguagesStackPanel.Children.Count - 1, languageBoxContent);
             LanguageScrollViewer.ScrollToBottom();
@@ -293,6 +297,36 @@ namespace CodeMemo
             optionsPopup.Child = optionsMenu;
 
             optionsPopup.IsOpen = true;
+        }
+
+        private void ShowLanguageContextMenu(Grid languageBoxContent)
+        {
+            ContextMenu contextMenu = new ContextMenu
+            {
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+
+            MenuItem renameMenuItem = new MenuItem
+            {
+                Header = "Rename",
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+            renameMenuItem.Click += (s, e) => RenameLanguage(languageBoxContent);
+
+            MenuItem deleteMenuItem = new MenuItem
+            {
+                Header = "Delete",
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+            deleteMenuItem.Click += (s, e) => DeleteLanguage(languageBoxContent);
+
+            contextMenu.Items.Add(renameMenuItem);
+            contextMenu.Items.Add(deleteMenuItem);
+
+            contextMenu.IsOpen = true;
         }
 
         private void RenameLanguage(Grid languageBoxContent)
@@ -439,7 +473,13 @@ namespace CodeMemo
                 FunctionTextScrollViewer.Visibility = Visibility.Visible;
             };
 
-            functionBoxContent.MouseLeftButtonDown += FunctionBox_Click; // THIS LINE
+            functionBoxContent.MouseLeftButtonDown += FunctionBox_Click;
+
+            // Add right-click event handler
+            functionBoxContent.MouseRightButtonDown += (s, e) =>
+            {
+                ShowFunctionContextMenu(functionBoxContent);
+            };
 
             // Insert the function box at the beginning of the stack panel
             FunctionsStackPanel.Children.Insert(FunctionsStackPanel.Children.Count - 1, functionBoxContent);
@@ -448,6 +488,35 @@ namespace CodeMemo
             FunctionsScrollViewer.ScrollToBottom();
         }
 
+        private void ShowFunctionContextMenu(Grid functionBoxContent)
+        {
+            ContextMenu contextMenu = new ContextMenu
+            {
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+
+            MenuItem renameMenuItem = new MenuItem
+            {
+                Header = "Rename",
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+            renameMenuItem.Click += (s, e) => RenameFunction(functionBoxContent);
+
+            MenuItem deleteMenuItem = new MenuItem
+            {
+                Header = "Delete",
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 12
+            };
+            deleteMenuItem.Click += (s, e) => DeleteFunction(functionBoxContent);
+
+            contextMenu.Items.Add(renameMenuItem);
+            contextMenu.Items.Add(deleteMenuItem);
+
+            contextMenu.IsOpen = true;
+        }
 
         private void ShowFunctionOptions(Button optionsButton, Grid functionBoxContent)
         {
