@@ -23,12 +23,13 @@ namespace CodeMemo
     {
         public class LanguageData
         {
-            public List<string> Languages { get; set; } = new List<string>();
+            public Dictionary<string, List<string>> Languages { get; set; } = new Dictionary<string, List<string>>();
         }
 
+        private string selectedLanguage = string.Empty;
 
         //Main Funcs
-        private string languageFilePath = "languages.json";
+        private string vaultFilePath = "vault.json";
         private LanguageData languageData = new LanguageData();
 
         public MainWindow()
@@ -54,7 +55,7 @@ namespace CodeMemo
 
         private void CreateLanguageBoxButton_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog inputDialog = new InputDialog(languageData.Languages);
+            InputDialog inputDialog = new InputDialog(languageData.Languages.Keys.ToList());
             bool? result = inputDialog.ShowDialog();
 
             if (result == true)
@@ -66,9 +67,9 @@ namespace CodeMemo
 
         private void CreateLanguageBox(string languageName)
         {
-            if (!languageData.Languages.Contains(languageName))
+            if (!languageData.Languages.ContainsKey(languageName))
             {
-                languageData.Languages.Add(languageName);
+                languageData.Languages[languageName] = new List<string>(); // Initialize with an empty list of functions
                 SaveLanguages();
             }
 
@@ -83,7 +84,7 @@ namespace CodeMemo
             {
                 Width = 124,
                 Height = 34,
-                Margin = new Thickness(0, 5, 0, 0)
+                Margin = new Thickness(0, 12, 0, 0)
             };
 
             TextBox languageLabel = new TextBox
@@ -123,16 +124,57 @@ namespace CodeMemo
             optionsButton.Click += (s, e) => ShowLanguageOptions(optionsButton, languageBoxContent);
 
             languageBoxContent.Children.Add(optionsButton);
+
+            languageBoxContent.MouseLeftButtonDown += (s, e) =>
+            {
+
+                // Deselect all language boxes
+                foreach (Grid languageBox in LanguagesStackPanel.Children.OfType<Grid>())
+                {
+                    Image image = languageBox.Children.OfType<Image>().FirstOrDefault();
+                    if (image != null)
+                    {
+                        image.Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative));
+                    }
+                }
+
+                // Set the selected language box image
+                Image selectedImage = languageBoxContent.Children.OfType<Image>().FirstOrDefault();
+                if (selectedImage != null)
+                {
+                    selectedImage.Source = new BitmapImage(new Uri("Images/selectedButton.PNG", UriKind.Relative));
+                }
+
+                // Set the selected language variable
+                selectedLanguage = ((TextBox)languageBoxContent.Children.OfType<TextBox>().FirstOrDefault()).Text;
+
+                AddFunctionButton.Visibility = Visibility.Visible;
+
+                // Load functions for the selected language
+                LoadFunctionsForLanguage(selectedLanguage);
+
+                // Make the AddFunctionButton visible once a language box is selected
+                AddFunctionButton.Visibility = Visibility.Visible;
+            };
+
+
+
             LanguagesStackPanel.Children.Insert(LanguagesStackPanel.Children.Count - 1, languageBoxContent);
             LanguageScrollViewer.ScrollToBottom();
         }
+
+        private string GetSelectedLanguage()
+        {
+            return selectedLanguage;
+        }
+
 
         private void SaveLanguages()
         {
             try
             {
                 string json = JsonSerializer.Serialize(languageData, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(languageFilePath, json);
+                File.WriteAllText(vaultFilePath, json);
             }
             catch (Exception ex)
             {
@@ -142,14 +184,14 @@ namespace CodeMemo
 
         private void LoadLanguages()
         {
-            if (File.Exists(languageFilePath))
+            if (File.Exists(vaultFilePath))
             {
                 try
                 {
-                    string json = File.ReadAllText(languageFilePath);
+                    string json = File.ReadAllText(vaultFilePath);
                     languageData = JsonSerializer.Deserialize<LanguageData>(json) ?? new LanguageData();
 
-                    foreach (var language in languageData.Languages)
+                    foreach (var language in languageData.Languages.Keys)
                     {
                         CreateLanguageBox(language);
                     }
@@ -183,6 +225,7 @@ namespace CodeMemo
                 LanguagesStackPanel.Children.Remove(languageBoxContent);
             }
         }
+
         private void ShowLanguageOptions(Button optionsButton, Grid languageBoxContent)
         {
             Popup optionsPopup = new Popup
@@ -239,26 +282,6 @@ namespace CodeMemo
             optionsMenu.Children.Add(deleteButton);
             optionsPopup.Child = optionsMenu;
 
-            // Store the event handler in a variable
-            MouseButtonEventHandler clickOutsideHandler = null;
-
-            clickOutsideHandler = (s, e) =>
-            {
-                if (!optionsMenu.IsMouseOver) // If click is outside the menu
-                {
-                    optionsPopup.IsOpen = false;
-                }
-            };
-
-            // Attach event listener
-            this.MouseDown += clickOutsideHandler;
-
-            // Ensure the event is removed when popup closes
-            optionsPopup.Closed += (s, e) =>
-            {
-                this.MouseDown -= clickOutsideHandler;
-            };
-
             optionsPopup.IsOpen = true;
         }
 
@@ -272,7 +295,7 @@ namespace CodeMemo
             }
 
             // Open the rename dialog and update the label
-            InputDialog inputDialog = new InputDialog(languageData.Languages);
+            InputDialog inputDialog = new InputDialog(languageData.Languages.Keys.ToList());
             if (inputDialog.ShowDialog() == true)
             {
                 string newLanguageName = inputDialog.newBoxName;
@@ -286,33 +309,40 @@ namespace CodeMemo
                     languageLabel.Text = newLanguageName;
 
                     // Update the language data list
-                    int index = languageData.Languages.IndexOf(oldLanguageName);
-                    if (index >= 0)
+                    if (languageData.Languages.ContainsKey(oldLanguageName))
                     {
-                        languageData.Languages[index] = newLanguageName;
+                        var functions = languageData.Languages[oldLanguageName];
+                        languageData.Languages.Remove(oldLanguageName);
+                        languageData.Languages[newLanguageName] = functions;
                         SaveLanguages(); // Save the updated list
                     }
                 }
             }
         }
 
-
-
-
-
-
-
-        //This is the section for modifying anything Function related
-
         private void CreateFunctionBoxButton_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog inputDialog = new InputDialog(new List<string>());
+            string selectedLanguage = GetSelectedLanguage();
+            if (string.IsNullOrEmpty(selectedLanguage)) return;
+
+            // Prompt the user for a function name
+            InputDialog inputDialog = new InputDialog(languageData.Languages[selectedLanguage]);
             bool? result = inputDialog.ShowDialog();
 
-            if (result == true)
+            if (result == true && !string.IsNullOrWhiteSpace(inputDialog.newBoxName))
             {
                 string functionName = inputDialog.newBoxName;
+
+                // Ensure the language exists in the dictionary
+                if (!languageData.Languages.ContainsKey(selectedLanguage))
+                {
+                    languageData.Languages[selectedLanguage] = new List<string>();
+                }
+
+                // Add function and update UI
+                languageData.Languages[selectedLanguage].Add(functionName);
                 CreateFunctionBox(functionName);
+                SaveLanguages();
             }
         }
 
@@ -323,13 +353,6 @@ namespace CodeMemo
                 Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative)),
                 Height = 34,
                 Width = 124
-            };
-
-            Grid functionBoxContent = new Grid
-            {
-                Width = 124,
-                Height = 34,
-                Margin = new Thickness(0, 5, 0, 0)
             };
 
             TextBox functionLabel = new TextBox
@@ -350,9 +373,18 @@ namespace CodeMemo
                 Cursor = Cursors.Arrow
             };
 
+            Grid functionBoxContent = new Grid
+            {
+                Width = 124,
+                Height = 34,
+                Margin = new Thickness(0, 12, 0, 0),
+                Tag = "FunctionBox" // Tag to identify the function box
+            };
+
             functionBoxContent.Children.Add(functionImage);
             functionBoxContent.Children.Add(functionLabel);
 
+            // Add the options button for each function
             Button optionsButton = new Button
             {
                 Background = Brushes.Transparent,
@@ -370,10 +402,60 @@ namespace CodeMemo
 
             functionBoxContent.Children.Add(optionsButton);
 
+            // Insert the function box at the beginning of the stack panel
             FunctionsStackPanel.Children.Insert(FunctionsStackPanel.Children.Count - 1, functionBoxContent);
 
+            // Scroll to the bottom of the list (optional)
             FunctionsScrollViewer.ScrollToBottom();
         }
+
+        private void LoadFunctionsForLanguage(string selectedLanguage)
+        {
+            // Get the existing "Add Function" button to preserve it
+            Button addFunctionButton = FunctionsStackPanel.Children.OfType<Button>().FirstOrDefault();
+
+            // Clear only the function boxes, not the add button
+            var functionBoxes = FunctionsStackPanel.Children.OfType<Grid>().ToList();
+            foreach (var box in functionBoxes)
+            {
+                FunctionsStackPanel.Children.Remove(box);
+            }
+
+            // Check if the selected language has functions
+            if (languageData.Languages.ContainsKey(selectedLanguage))
+            {
+                // Get the list of functions for the selected language
+                var functions = languageData.Languages[selectedLanguage];
+
+                // Loop through and add each function box
+                foreach (var function in functions)
+                {
+                    CreateFunctionBox(function);
+                }
+            }
+            else
+            {
+                // Handle case where no functions are available for the selected language
+                Console.WriteLine("No functions available for the selected language.");
+            }
+
+            // If the "Add Function" button was found, re-add it at the bottom of the stack panel
+            if (addFunctionButton != null)
+            {
+                // Make sure it stays visible
+                addFunctionButton.Visibility = Visibility.Visible;
+
+                // Insert the "Add Function" button at the bottom of the list
+                if (!FunctionsStackPanel.Children.Contains(addFunctionButton))
+                {
+                    FunctionsStackPanel.Children.Add(addFunctionButton);
+                }
+            }
+
+            // Optionally, scroll to the bottom of the ScrollViewer
+            FunctionsScrollViewer.ScrollToBottom();
+        }
+
 
         private void ShowFunctionOptions(Button optionsButton, Grid functionBoxContent)
         {
@@ -431,58 +513,58 @@ namespace CodeMemo
             optionsMenu.Children.Add(deleteButton);
             optionsPopup.Child = optionsMenu;
 
-            MouseButtonEventHandler clickOutsideHandler = null;
-
-            clickOutsideHandler = (s, e) =>
-            {
-                if (!optionsMenu.IsMouseOver)
-                {
-                    optionsPopup.IsOpen = false;
-                }
-            };
-
-            this.MouseDown += clickOutsideHandler;
-
-            optionsPopup.Closed += (s, e) =>
-            {
-                this.MouseDown -= clickOutsideHandler;
-            };
-
             optionsPopup.IsOpen = true;
         }
 
+        // This method handles deleting a function from the UI and the language data
+        private void DeleteFunction(Grid functionBoxContent)
+        {
+            TextBox functionLabel = functionBoxContent.Children.OfType<TextBox>().FirstOrDefault();
+            if (functionLabel != null)
+            {
+                string functionName = functionLabel.Text;
+                string selectedLanguage = GetSelectedLanguage();
+
+                // Remove the function from the language's list of functions
+                if (languageData.Languages.ContainsKey(selectedLanguage))
+                {
+                    languageData.Languages[selectedLanguage].Remove(functionName);
+                    SaveLanguages(); // Save the updated list
+                }
+
+                // Remove the function box from the UI
+                FunctionsStackPanel.Children.Remove(functionBoxContent);
+            }
+        }
+
+        // This method handles renaming a function
         private void RenameFunction(Grid functionBoxContent)
         {
-
-            StackPanel optionsMenu = functionBoxContent.Children.OfType<StackPanel>().LastOrDefault();
-            if (optionsMenu != null)
+            TextBox functionLabel = functionBoxContent.Children.OfType<TextBox>().FirstOrDefault();
+            if (functionLabel != null)
             {
-                optionsMenu.Visibility = Visibility.Collapsed;
-            }
-
-            InputDialog inputDialog = new InputDialog(new List<string>());
-            if (inputDialog.ShowDialog() == true)
-            {
-                string newFunctionName = inputDialog.newBoxName;
-
-                TextBox functionLabel = functionBoxContent.Children.OfType<TextBox>().FirstOrDefault();
-                if (functionLabel != null)
+                string oldFunctionName = functionLabel.Text;
+                InputDialog inputDialog = new InputDialog(languageData.Languages.Keys.ToList()); // Create a new input dialog for the function name
+                if (inputDialog.ShowDialog() == true)
                 {
+                    string newFunctionName = inputDialog.newBoxName;
+
+                    // Update the function name in the UI
                     functionLabel.Text = newFunctionName;
+
+                    // Update the function in the language data
+                    string selectedLanguage = GetSelectedLanguage();
+                    if (languageData.Languages.ContainsKey(selectedLanguage))
+                    {
+                        var functions = languageData.Languages[selectedLanguage];
+                        functions[functions.IndexOf(oldFunctionName)] = newFunctionName;
+                        SaveLanguages(); // Save the updated list
+                    }
                 }
             }
         }
 
-        private void DeleteFunction(Grid functionBoxContent)
-        {
 
-            StackPanel optionsMenu = functionBoxContent.Children.OfType<StackPanel>().LastOrDefault();
-            if (optionsMenu != null)
-            {
-                optionsMenu.Visibility = Visibility.Collapsed;
-            }
 
-            FunctionsStackPanel.Children.Remove(functionBoxContent);
-        }
     }
 }

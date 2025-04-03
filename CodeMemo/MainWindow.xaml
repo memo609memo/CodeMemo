@@ -78,7 +78,8 @@
                             Height="39" 
                             Width="130"
                             HorizontalAlignment="Left"
-                            Cursor="Hand">
+                            Cursor="Hand"
+                            Visibility="Visible">
                         <Button.Content>
                             <Image Source="Images/createButton.PNG" 
                                    Height="34" 
