@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Threading;
 
 namespace CodeMemo
 {
@@ -24,8 +25,13 @@ namespace CodeMemo
     {
         public class LanguageData
         {
-            public Dictionary<string, Dictionary<string, Dictionary<string, string>>> Languages { get; set; } = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
+            public Dictionary<string, Dictionary<string, FunctionData>> Languages { get; set; } = new Dictionary<string, Dictionary<string, FunctionData>>();
+        }
 
+        public class FunctionData
+        {
+            public string Block { get; set; }
+            public List<string> Keybinds { get; set; } = new List<string>();
         }
 
         private string selectedLanguage = string.Empty;
@@ -41,6 +47,7 @@ namespace CodeMemo
             InitializeComponent();
             LoadLanguages();
         }
+
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
@@ -73,7 +80,7 @@ namespace CodeMemo
         {
             if (!languageData.Languages.ContainsKey(languageName))
             {
-                languageData.Languages[languageName] = new Dictionary<string, Dictionary<string, string>>();
+                languageData.Languages[languageName] = new Dictionary<string, FunctionData>();
                 SaveLanguages();
             }
 
@@ -132,6 +139,7 @@ namespace CodeMemo
             languageBoxContent.MouseLeftButtonDown += (s, e) =>
             {
                 FunctionTextScrollViewer.Visibility = Visibility.Hidden;
+                KeybindsScrollViewer.Visibility = Visibility.Hidden; // Hide the keybinds UI
 
                 // Deselect all language boxes
                 foreach (Grid languageBox in LanguagesStackPanel.Children.OfType<Grid>())
@@ -163,10 +171,7 @@ namespace CodeMemo
             };
 
             // Add right-click event handler
-            languageBoxContent.MouseRightButtonDown += (s, e) =>
-            {
-                ShowLanguageContextMenu(languageBoxContent);
-            };
+            languageBoxContent.MouseRightButtonDown += (s, e) => { ShowLanguageContextMenu(languageBoxContent); };
 
             LanguagesStackPanel.Children.Insert(LanguagesStackPanel.Children.Count - 1, languageBoxContent);
             LanguageScrollViewer.ScrollToBottom();
@@ -188,10 +193,12 @@ namespace CodeMemo
             {
                 string json = JsonSerializer.Serialize(languageData, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(vaultFilePath, json); // Save the full structure
+                Debug.WriteLine("Languages data saved to JSON");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving languages: {ex.Message}");
+                Debug.WriteLine($"Error saving languages: {ex.Message}");
             }
         }
 
@@ -364,6 +371,9 @@ namespace CodeMemo
             }
         }
 
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         private void CreateFunctionBoxButton_Click(object sender, RoutedEventArgs e)
         {
             string selectedLanguage = GetSelectedLanguage();
@@ -379,14 +389,14 @@ namespace CodeMemo
                 // Ensure the language exists in the dictionary
                 if (!languageData.Languages.ContainsKey(selectedLanguage))
                 {
-                    languageData.Languages[selectedLanguage] = new Dictionary<string, Dictionary<string, string>>();
+                    languageData.Languages[selectedLanguage] = new Dictionary<string, FunctionData>();
                 }
 
-                // Add function with empty dictionary for "Block" and "keybind"
-                languageData.Languages[selectedLanguage][functionName] = new Dictionary<string, string>
+                // Add function with empty FunctionData
+                languageData.Languages[selectedLanguage][functionName] = new FunctionData
                 {
-                    { "Block", "" },
-                    { "keybind", "" }
+                    Block = "",
+                    Keybinds = new List<string>()
                 };
 
                 CreateFunctionBox(functionName);
@@ -476,10 +486,7 @@ namespace CodeMemo
             functionBoxContent.MouseLeftButtonDown += FunctionBox_Click;
 
             // Add right-click event handler
-            functionBoxContent.MouseRightButtonDown += (s, e) =>
-            {
-                ShowFunctionContextMenu(functionBoxContent);
-            };
+            functionBoxContent.MouseRightButtonDown += (s, e) => { ShowFunctionContextMenu(functionBoxContent); };
 
             // Insert the function box at the beginning of the stack panel
             FunctionsStackPanel.Children.Insert(FunctionsStackPanel.Children.Count - 1, functionBoxContent);
@@ -606,16 +613,22 @@ namespace CodeMemo
             if (functionLabel != null)
             {
                 string oldFunctionName = functionLabel.Text;
-                InputDialog inputDialog = new InputDialog(languageData.Languages.Keys.ToList()); // Create a new input dialog for the function name
+                InputDialog
+                    inputDialog =
+                        new InputDialog(languageData.Languages.Keys
+                            .ToList()); // Create a new input dialog for the function name
                 if (inputDialog.ShowDialog() == true)
                 {
                     string newFunctionName = inputDialog.newBoxName;
 
                     // Check if the new function name already exists under the selected language
                     string selectedLanguage = GetSelectedLanguage();
-                    if (languageData.Languages.ContainsKey(selectedLanguage) && languageData.Languages[selectedLanguage].ContainsKey(newFunctionName))
+                    if (languageData.Languages.ContainsKey(selectedLanguage) &&
+                        languageData.Languages[selectedLanguage].ContainsKey(newFunctionName))
                     {
-                        MessageBox.Show($"Function '{newFunctionName}' already exists under language '{selectedLanguage}'. Please choose a different name.", "Rename Function", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show(
+                            $"Function '{newFunctionName}' already exists under language '{selectedLanguage}'. Please choose a different name.",
+                            "Rename Function", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
 
@@ -654,24 +667,24 @@ namespace CodeMemo
 
                     if (languageData.Languages.ContainsKey(lang))
                     {
-                        // Ensure function is stored as a Dictionary<string, string>
+                        // Ensure function is stored as a FunctionData
                         if (languageData.Languages[lang].ContainsKey(func))
                         {
-                            var functionData = languageData.Languages[lang][func] as Dictionary<string, string>;
+                            var functionData = languageData.Languages[lang][func];
 
                             if (functionData != null)
                             {
                                 // Update the "Block" key in the dictionary with the new value
-                                functionData["Block"] = FunctionTextBlock.Text;
+                                functionData.Block = FunctionTextBlock.Text;
                             }
                             else
                             {
-                                // If it's not a dictionary, initialize it as one
-                                languageData.Languages[lang][func] = new Dictionary<string, string>
-                        {
-                            { "Block", FunctionTextBlock.Text },
-                            { "keybind", "" }
-                        };
+                                // If it's not a FunctionData, initialize it as one
+                                languageData.Languages[lang][func] = new FunctionData
+                                {
+                                    Block = FunctionTextBlock.Text,
+                                    Keybinds = new List<string>()
+                                };
                             }
 
                             SaveLanguages();
@@ -689,27 +702,40 @@ namespace CodeMemo
                 string functionName = functionLabel.Text;
                 string newSelectedLanguage = GetSelectedLanguage();
 
-                if (!string.IsNullOrEmpty(newSelectedLanguage) && languageData.Languages.ContainsKey(newSelectedLanguage))
+                if (!string.IsNullOrEmpty(newSelectedLanguage) &&
+                    languageData.Languages.ContainsKey(newSelectedLanguage))
                 {
-                    selectedFunction = $"{newSelectedLanguage}.{functionName}";
+                    selectedFunction = functionName;
 
                     if (languageData.Languages[newSelectedLanguage].ContainsKey(functionName))
                     {
-                        var functionData = languageData.Languages[newSelectedLanguage][functionName] as Dictionary<string, string>;
+                        var functionData = languageData.Languages[newSelectedLanguage][functionName];
 
                         if (functionData != null)
                         {
                             // Update the "Block" key in the dictionary with the new value
-                            FunctionTextBlock.Text = functionData["Block"];
+                            FunctionTextBlock.Text = functionData.Block;
+
+                            // Load keybinds for the function
+                            KeybindsStackPanel.Children.Clear();
+                            KeybindsStackPanel.Children.Add(TimerTextBlock);
+                            KeybindsStackPanel.Children.Add(StartKeybindButton);
+                            if (functionData.Keybinds != null)
+                            {
+                                foreach (var key in functionData.Keybinds)
+                                {
+                                    AddKeyToUI(key);
+                                }
+                            }
                         }
                         else
                         {
-                            // If it's not a dictionary, initialize it as one
-                            languageData.Languages[newSelectedLanguage][functionName] = new Dictionary<string, string>
-                    {
-                        { "Block", "" },
-                        { "keybind", "" }
-                    };
+                            // If it's not a FunctionData, initialize it as one
+                            languageData.Languages[newSelectedLanguage][functionName] = new FunctionData
+                            {
+                                Block = "",
+                                Keybinds = new List<string>()
+                            };
 
                             FunctionTextBlock.Text = "";
                         }
@@ -721,6 +747,8 @@ namespace CodeMemo
                 }
             }
 
+            StartKeybindButton.Visibility = Visibility.Visible;
+            KeybindsScrollViewer.Visibility = Visibility.Visible;
             FunctionTextScrollViewer.Visibility = Visibility.Visible;
         }
 
@@ -729,7 +757,8 @@ namespace CodeMemo
             string selectedLanguage = GetSelectedLanguage();
             string selectedFunction = GetSelectedFunction();
 
-            Trace.WriteLine($"TextChanged event triggered. Selected Language: {selectedLanguage}, Selected Function: {selectedFunction}");
+            Trace.WriteLine(
+                $"TextChanged event triggered. Selected Language: {selectedLanguage}, Selected Function: {selectedFunction}");
 
             if (!string.IsNullOrEmpty(selectedLanguage) && !string.IsNullOrEmpty(selectedFunction))
             {
@@ -746,23 +775,23 @@ namespace CodeMemo
                     {
                         Trace.WriteLine($"Function '{functionName}' exists in language '{selectedLanguage}'.");
 
-                        // Ensure functionData is a Dictionary<string, string>
-                        var functionData = languageData.Languages[selectedLanguage][functionName] as Dictionary<string, string>;
+                        // Ensure functionData is a FunctionData
+                        var functionData = languageData.Languages[selectedLanguage][functionName];
 
                         if (functionData != null)
                         {
-                            // Update the "Block" key in the dictionary with the new value
-                            functionData["Block"] = FunctionTextBlock.Text;
-                            Trace.WriteLine($"Updated Block text: {functionData["Block"]}");
+                            // Update the "Block" key in the FunctionData with the new value
+                            functionData.Block = FunctionTextBlock.Text;
+                            Trace.WriteLine($"Updated Block text: {functionData.Block}");
                         }
                         else
                         {
-                            // If it's not a dictionary, initialize it as one
-                            languageData.Languages[selectedLanguage][functionName] = new Dictionary<string, string>
-                    {
-                        { "Block", FunctionTextBlock.Text },
-                        { "keybind", "" }
-                    };
+                            // If it's not a FunctionData, initialize it as one
+                            languageData.Languages[selectedLanguage][functionName] = new FunctionData
+                            {
+                                Block = FunctionTextBlock.Text,
+                                Keybinds = new List<string>()
+                            };
                             Trace.WriteLine($"Initialized new function data with Block text: {FunctionTextBlock.Text}");
                         }
 
@@ -810,6 +839,16 @@ namespace CodeMemo
                 foreach (var functionName in functions.Keys)
                 {
                     CreateFunctionBox(functionName);
+
+                    // Load keybinds for the function
+                    var functionData = functions[functionName];
+                    if (functionData != null && functionData.Keybinds != null)
+                    {
+                        foreach (var key in functionData.Keybinds)
+                        {
+                            AddKeyToUI(key);
+                        }
+                    }
                 }
             }
             else
@@ -835,8 +874,168 @@ namespace CodeMemo
             FunctionsScrollViewer.ScrollToBottom();
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        
+
+
+
+
+
+
+        private List<string> currentKeybind = new List<string>();
+        private DispatcherTimer keybindTimer;
+
+        private void StartKeybindButton_Click(object sender, RoutedEventArgs e)
+        {
+            currentKeybind.Clear();
+            KeybindsStackPanel.Children.Clear();
+            KeybindsStackPanel.Children.Add(TimerTextBlock); // Add the TimerTextBlock
+            KeybindsStackPanel.Children.Add(StartKeybindButton); // Ensure the "Create" button is added back
+            KeybindsScrollViewer.Visibility = Visibility.Visible;
+            TimerTextBlock.Visibility = Visibility.Visible;
+            this.KeyDown += MainWindow_KeyDown;
+
+            int remainingTime = 2;
+            TimerTextBlock.Text = $"{remainingTime} seconds remaining";
+
+            keybindTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            keybindTimer.Tick += (s, args) =>
+            {
+                remainingTime--;
+                TimerTextBlock.Text = $"{remainingTime} seconds remaining";
+                Debug.WriteLine($"Timer tick: {remainingTime} seconds remaining");
+
+                if (remainingTime <= 0)
+                {
+                    this.KeyDown -= MainWindow_KeyDown;
+                    keybindTimer.Stop();
+                    SaveKeybind();
+                    TimerTextBlock.Visibility = Visibility.Collapsed;
+                    // Move focus away from the StartKeybindButton
+                    Keyboard.ClearFocus();
+                }
+            };
+            keybindTimer.Start();
+            Debug.WriteLine("Keybind process started");
+        }
+
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Ignore the Enter key during the keybind process
+                return;
+            }
+
+            if (!keybindTimer.IsEnabled)
+            {
+                keybindTimer.Start();
+            }
+
+            string key = e.Key.ToString();
+            if (!currentKeybind.Contains(key))
+            {
+                currentKeybind.Add(key);
+                AddKeyToUI(key);
+                Debug.WriteLine($"Key added: {key}");
+            }
+        }
+
+        private void AddKeyToUI(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+
+            Grid keyBoxContent = new Grid
+            {
+                Width = 124,
+                Height = 34,
+                Margin = new Thickness(0, 12, 0, 0)
+            };
+
+            Image keyImage = new Image
+            {
+                Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative)),
+                Height = 34,
+                Width = 124
+            };
+
+            TextBox keyLabel = new TextBox
+            {
+                Text = key,
+                Background = Brushes.Transparent,
+                Foreground = Brushes.Black,
+                BorderBrush = Brushes.Transparent,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                FontFamily = (FontFamily)Application.Current.Resources["KalamFont"],
+                FontSize = 18,
+                IsReadOnly = true,
+                TextAlignment = TextAlignment.Center,
+                Focusable = false,
+                IsHitTestVisible = false,
+                BorderThickness = new Thickness(0),
+                Cursor = Cursors.Arrow
+            };
+
+            keyBoxContent.Children.Add(keyImage);
+            keyBoxContent.Children.Add(keyLabel);
+
+            // Insert the keyBoxContent above the "Create" button
+            KeybindsStackPanel.Children.Insert(KeybindsStackPanel.Children.Count - 1, keyBoxContent);
+        }
+
+        private void SaveKeybind()
+        {
+            string selectedLanguage = GetSelectedLanguage();
+            string selectedFunction = GetSelectedFunction();
+
+            if (!string.IsNullOrEmpty(selectedLanguage) && !string.IsNullOrEmpty(selectedFunction))
+            {
+                if (languageData.Languages.ContainsKey(selectedLanguage))
+                {
+                    if (languageData.Languages[selectedLanguage].ContainsKey(selectedFunction))
+                    {
+                        var functionData = languageData.Languages[selectedLanguage][selectedFunction];
+
+                        if (functionData != null)
+                        {
+                            functionData.Keybinds = new List<string>(currentKeybind);
+                            Debug.WriteLine($"Keybinds saved for {selectedLanguage}.{selectedFunction}: {string.Join(" + ", currentKeybind)}");
+                        }
+                        else
+                        {
+                            languageData.Languages[selectedLanguage][selectedFunction] = new FunctionData
+                            {
+                                Block = FunctionTextBlock.Text,
+                                Keybinds = new List<string>(currentKeybind)
+                            };
+                            Debug.WriteLine($"New FunctionData created and keybinds saved for {selectedLanguage}.{selectedFunction}: {string.Join(" + ", currentKeybind)}");
+                        }
+
+                        SaveLanguages();
+                        Debug.WriteLine("Languages data saved to JSON after saving keybinds.");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Function '{selectedFunction}' does not exist in language '{selectedLanguage}'.");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"Language '{selectedLanguage}' does not exist in languageData.");
+                }
+            }
+            else
+            {
+                Debug.WriteLine("Selected language or function is empty.");
+            }
+        }
 
 
 

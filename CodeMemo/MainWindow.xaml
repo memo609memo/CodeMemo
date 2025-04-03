@@ -147,6 +147,40 @@
                 </Border>
             </ScrollViewer>
 
+            <ScrollViewer Grid.Column="3" Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Margin="10"
+                          Visibility="Hidden"
+                          x:Name="KeybindsScrollViewer">
+                <StackPanel x:Name="KeybindsStackPanel"
+                            Orientation="Vertical">
+                    <TextBlock x:Name="TimerTextBlock"
+                               Text="2 seconds remaining"
+                               Margin="0,12,0,0"
+                               HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+                    <Button x:Name="StartKeybindButton"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Click="StartKeybindButton_Click"
+                            Margin="10"
+                            Height="39"
+                            Width="130"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Cursor="Hand"
+                            Visibility="Hidden">
+                        <Button.Content>
+                            <Image Source="Images/createButton.PNG"
+                                   Height="34"
+                                   Width="124"
+                                   HorizontalAlignment="Center"/>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+
         </Grid>
 
     </Border>
