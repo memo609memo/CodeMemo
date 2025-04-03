@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,10 +24,13 @@ namespace CodeMemo
     {
         public class LanguageData
         {
-            public Dictionary<string, List<string>> Languages { get; set; } = new Dictionary<string, List<string>>();
+            public Dictionary<string, Dictionary<string, Dictionary<string, string>>> Languages { get; set; } = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>();
+
         }
 
         private string selectedLanguage = string.Empty;
+        private string selectedFunction = string.Empty;
+
 
         //Main Funcs
         private string vaultFilePath = "vault.json";
@@ -69,7 +73,7 @@ namespace CodeMemo
         {
             if (!languageData.Languages.ContainsKey(languageName))
             {
-                languageData.Languages[languageName] = new List<string>(); // Initialize with an empty list of functions
+                languageData.Languages[languageName] = new Dictionary<string, Dictionary<string, string>>();
                 SaveLanguages();
             }
 
@@ -127,6 +131,7 @@ namespace CodeMemo
 
             languageBoxContent.MouseLeftButtonDown += (s, e) =>
             {
+                FunctionTextScrollViewer.Visibility = Visibility.Hidden;
 
                 // Deselect all language boxes
                 foreach (Grid languageBox in LanguagesStackPanel.Children.OfType<Grid>())
@@ -168,13 +173,17 @@ namespace CodeMemo
             return selectedLanguage;
         }
 
+        private string GetSelectedFunction()
+        {
+            return selectedFunction;
+        }
 
         private void SaveLanguages()
         {
             try
             {
                 string json = JsonSerializer.Serialize(languageData, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(vaultFilePath, json);
+                File.WriteAllText(vaultFilePath, json); // Save the full structure
             }
             catch (Exception ex)
             {
@@ -191,6 +200,7 @@ namespace CodeMemo
                     string json = File.ReadAllText(vaultFilePath);
                     languageData = JsonSerializer.Deserialize<LanguageData>(json) ?? new LanguageData();
 
+                    // Load all languages and their functions
                     foreach (var language in languageData.Languages.Keys)
                     {
                         CreateLanguageBox(language);
@@ -313,8 +323,8 @@ namespace CodeMemo
                     {
                         var functions = languageData.Languages[oldLanguageName];
                         languageData.Languages.Remove(oldLanguageName);
-                        languageData.Languages[newLanguageName] = functions;
-                        SaveLanguages(); // Save the updated list
+                        languageData.Languages[newLanguageName] = functions; // Keep functions
+                        SaveLanguages();
                     }
                 }
             }
@@ -325,8 +335,7 @@ namespace CodeMemo
             string selectedLanguage = GetSelectedLanguage();
             if (string.IsNullOrEmpty(selectedLanguage)) return;
 
-            // Prompt the user for a function name
-            InputDialog inputDialog = new InputDialog(languageData.Languages[selectedLanguage]);
+            InputDialog inputDialog = new InputDialog(languageData.Languages[selectedLanguage].Keys.ToList());
             bool? result = inputDialog.ShowDialog();
 
             if (result == true && !string.IsNullOrWhiteSpace(inputDialog.newBoxName))
@@ -336,15 +345,21 @@ namespace CodeMemo
                 // Ensure the language exists in the dictionary
                 if (!languageData.Languages.ContainsKey(selectedLanguage))
                 {
-                    languageData.Languages[selectedLanguage] = new List<string>();
+                    languageData.Languages[selectedLanguage] = new Dictionary<string, Dictionary<string, string>>();
                 }
 
-                // Add function and update UI
-                languageData.Languages[selectedLanguage].Add(functionName);
+                // Add function with empty dictionary for "Block" and "keybind"
+                languageData.Languages[selectedLanguage][functionName] = new Dictionary<string, string>
+                {
+                    { "Block", "" },
+                    { "keybind", "" }
+                };
+
                 CreateFunctionBox(functionName);
                 SaveLanguages();
             }
         }
+
 
         private void CreateFunctionBox(string functionName)
         {
@@ -402,57 +417,34 @@ namespace CodeMemo
 
             functionBoxContent.Children.Add(optionsButton);
 
+            functionBoxContent.MouseLeftButtonDown += (s, e) =>
+            {
+                foreach (Grid functionBox in FunctionsStackPanel.Children.OfType<Grid>())
+                {
+                    Image image = functionBox.Children.OfType<Image>().FirstOrDefault();
+                    if (image != null)
+                    {
+                        image.Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative));
+                    }
+                }
+
+                // Set the selected language box image
+                Image selectedImage = functionBoxContent.Children.OfType<Image>().FirstOrDefault();
+                if (selectedImage != null)
+                {
+                    selectedImage.Source = new BitmapImage(new Uri("Images/selectedButton.PNG", UriKind.Relative));
+                }
+
+                // Show the ScrollViewer with the TextBox
+                FunctionTextScrollViewer.Visibility = Visibility.Visible;
+            };
+
+            functionBoxContent.MouseLeftButtonDown += FunctionBox_Click; // THIS LINE
+
             // Insert the function box at the beginning of the stack panel
             FunctionsStackPanel.Children.Insert(FunctionsStackPanel.Children.Count - 1, functionBoxContent);
 
             // Scroll to the bottom of the list (optional)
-            FunctionsScrollViewer.ScrollToBottom();
-        }
-
-        private void LoadFunctionsForLanguage(string selectedLanguage)
-        {
-            // Get the existing "Add Function" button to preserve it
-            Button addFunctionButton = FunctionsStackPanel.Children.OfType<Button>().FirstOrDefault();
-
-            // Clear only the function boxes, not the add button
-            var functionBoxes = FunctionsStackPanel.Children.OfType<Grid>().ToList();
-            foreach (var box in functionBoxes)
-            {
-                FunctionsStackPanel.Children.Remove(box);
-            }
-
-            // Check if the selected language has functions
-            if (languageData.Languages.ContainsKey(selectedLanguage))
-            {
-                // Get the list of functions for the selected language
-                var functions = languageData.Languages[selectedLanguage];
-
-                // Loop through and add each function box
-                foreach (var function in functions)
-                {
-                    CreateFunctionBox(function);
-                }
-            }
-            else
-            {
-                // Handle case where no functions are available for the selected language
-                Console.WriteLine("No functions available for the selected language.");
-            }
-
-            // If the "Add Function" button was found, re-add it at the bottom of the stack panel
-            if (addFunctionButton != null)
-            {
-                // Make sure it stays visible
-                addFunctionButton.Visibility = Visibility.Visible;
-
-                // Insert the "Add Function" button at the bottom of the list
-                if (!FunctionsStackPanel.Children.Contains(addFunctionButton))
-                {
-                    FunctionsStackPanel.Children.Add(addFunctionButton);
-                }
-            }
-
-            // Optionally, scroll to the bottom of the ScrollViewer
             FunctionsScrollViewer.ScrollToBottom();
         }
 
@@ -537,6 +529,7 @@ namespace CodeMemo
             }
         }
 
+
         // This method handles renaming a function
         private void RenameFunction(Grid functionBoxContent)
         {
@@ -557,12 +550,217 @@ namespace CodeMemo
                     if (languageData.Languages.ContainsKey(selectedLanguage))
                     {
                         var functions = languageData.Languages[selectedLanguage];
-                        functions[functions.IndexOf(oldFunctionName)] = newFunctionName;
-                        SaveLanguages(); // Save the updated list
+                        if (functions.ContainsKey(oldFunctionName))
+                        {
+                            var functionData = functions[oldFunctionName]; // Preserve the data
+                            functions.Remove(oldFunctionName); // Remove old function
+                            functions[newFunctionName] = functionData; // Add new function with new name
+                            SaveLanguages(); // Save changes
+                        }
                     }
                 }
             }
         }
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        private void FunctionBox_Click(object sender, MouseButtonEventArgs e)
+        {
+            // Save current function text before switching
+            if (!string.IsNullOrEmpty(selectedFunction))
+            {
+                string[] parts = selectedFunction.Split('.');
+                if (parts.Length == 2)
+                {
+                    string lang = parts[0];
+                    string func = parts[1];
+
+                    if (languageData.Languages.ContainsKey(lang))
+                    {
+                        // Ensure function is stored as a Dictionary<string, string>
+                        if (languageData.Languages[lang].ContainsKey(func))
+                        {
+                            var functionData = languageData.Languages[lang][func] as Dictionary<string, string>;
+
+                            if (functionData != null)
+                            {
+                                // Update the "Block" key in the dictionary with the new value
+                                functionData["Block"] = FunctionTextBlock.Text;
+                            }
+                            else
+                            {
+                                // If it's not a dictionary, initialize it as one
+                                languageData.Languages[lang][func] = new Dictionary<string, string>
+                        {
+                            { "Block", FunctionTextBlock.Text },
+                            { "keybind", "" }
+                        };
+                            }
+
+                            SaveLanguages();
+                        }
+                    }
+                }
+            }
+
+            // Identify the clicked function
+            Grid functionBoxContent = (Grid)sender;
+            TextBox functionLabel = functionBoxContent.Children.OfType<TextBox>().FirstOrDefault();
+
+            if (functionLabel != null)
+            {
+                string functionName = functionLabel.Text;
+                string newSelectedLanguage = GetSelectedLanguage();
+
+                if (!string.IsNullOrEmpty(newSelectedLanguage) && languageData.Languages.ContainsKey(newSelectedLanguage))
+                {
+                    selectedFunction = $"{newSelectedLanguage}.{functionName}";
+
+                    if (languageData.Languages[newSelectedLanguage].ContainsKey(functionName))
+                    {
+                        var functionData = languageData.Languages[newSelectedLanguage][functionName] as Dictionary<string, string>;
+
+                        if (functionData != null)
+                        {
+                            // Update the "Block" key in the dictionary with the new value
+                            FunctionTextBlock.Text = functionData["Block"];
+                        }
+                        else
+                        {
+                            // If it's not a dictionary, initialize it as one
+                            languageData.Languages[newSelectedLanguage][functionName] = new Dictionary<string, string>
+                    {
+                        { "Block", "" },
+                        { "keybind", "" }
+                    };
+
+                            FunctionTextBlock.Text = "";
+                        }
+                    }
+                    else
+                    {
+                        FunctionTextBlock.Text = "";
+                    }
+                }
+            }
+
+            FunctionTextScrollViewer.Visibility = Visibility.Visible;
+        }
+
+        private void FunctionTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string selectedLanguage = GetSelectedLanguage();
+            string selectedFunction = GetSelectedFunction();
+
+            Trace.WriteLine($"TextChanged event triggered. Selected Language: {selectedLanguage}, Selected Function: {selectedFunction}");
+
+            if (!string.IsNullOrEmpty(selectedLanguage) && !string.IsNullOrEmpty(selectedFunction))
+            {
+                Trace.WriteLine("Selected language and function are not empty.");
+
+                if (languageData.Languages.ContainsKey(selectedLanguage))
+                {
+                    Trace.WriteLine($"Language '{selectedLanguage}' exists in languageData.");
+
+                    // Extract the function name from selectedFunction
+                    string functionName = selectedFunction.Split('.').Last();
+
+                    if (languageData.Languages[selectedLanguage].ContainsKey(functionName))
+                    {
+                        Trace.WriteLine($"Function '{functionName}' exists in language '{selectedLanguage}'.");
+
+                        // Ensure functionData is a Dictionary<string, string>
+                        var functionData = languageData.Languages[selectedLanguage][functionName] as Dictionary<string, string>;
+
+                        if (functionData != null)
+                        {
+                            // Update the "Block" key in the dictionary with the new value
+                            functionData["Block"] = FunctionTextBlock.Text;
+                            Trace.WriteLine($"Updated Block text: {functionData["Block"]}");
+                        }
+                        else
+                        {
+                            // If it's not a dictionary, initialize it as one
+                            languageData.Languages[selectedLanguage][functionName] = new Dictionary<string, string>
+                    {
+                        { "Block", FunctionTextBlock.Text },
+                        { "keybind", "" }
+                    };
+                            Trace.WriteLine($"Initialized new function data with Block text: {FunctionTextBlock.Text}");
+                        }
+
+                        // Save the updated languages data
+                        SaveLanguages();
+                        Trace.WriteLine("Languages data saved.");
+                    }
+                    else
+                    {
+                        Trace.WriteLine($"Function '{functionName}' does not exist in language '{selectedLanguage}'.");
+                    }
+                }
+                else
+                {
+                    Trace.WriteLine($"Language '{selectedLanguage}' does not exist in languageData.");
+                }
+            }
+            else
+            {
+                Trace.WriteLine("Selected language or function is empty.");
+            }
+        }
+
+
+
+        private void LoadFunctionsForLanguage(string selectedLanguage)
+        {
+            // Get the existing "Add Function" button to preserve it
+            Button addFunctionButton = FunctionsStackPanel.Children.OfType<Button>().FirstOrDefault();
+
+            // Clear only the function boxes, not the add button
+            var functionBoxes = FunctionsStackPanel.Children.OfType<Grid>().ToList();
+            foreach (var box in functionBoxes)
+            {
+                FunctionsStackPanel.Children.Remove(box);
+            }
+
+            // Check if the selected language has functions
+            if (languageData.Languages.ContainsKey(selectedLanguage))
+            {
+                // Get the list of functions for the selected language
+                var functions = languageData.Languages[selectedLanguage];
+
+                // Loop through and add each function box
+                foreach (var functionName in functions.Keys)
+                {
+                    CreateFunctionBox(functionName);
+                }
+            }
+            else
+            {
+                // Handle case where no functions are available for the selected language
+                Console.WriteLine("No functions available for the selected language.");
+            }
+
+            // If the "Add Function" button was found, re-add it at the bottom of the stack panel
+            if (addFunctionButton != null)
+            {
+                // Make sure it stays visible
+                addFunctionButton.Visibility = Visibility.Visible;
+
+                // Insert the "Add Function" button at the bottom of the list
+                if (!FunctionsStackPanel.Children.Contains(addFunctionButton))
+                {
+                    FunctionsStackPanel.Children.Add(addFunctionButton);
+                }
+            }
+
+            // Optionally, scroll to the bottom of the ScrollViewer
+            FunctionsScrollViewer.ScrollToBottom();
+        }
+
+
+        
 
 
 

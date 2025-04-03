@@ -79,7 +79,7 @@
                             Width="130"
                             HorizontalAlignment="Left"
                             Cursor="Hand"
-                            Visibility="Visible">
+                            Visibility="Hidden">
                         <Button.Content>
                             <Image Source="Images/createButton.PNG" 
                                    Height="34" 
@@ -117,6 +117,35 @@
                 VerticalAlignment="Top"
                 Margin="0,14,11,0"/>
 
+
+            <ScrollViewer Grid.Column="2" Grid.Row="1"
+                          x:Name="FunctionTextScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto"
+                          Visibility="Hidden">
+
+                <Border CornerRadius="25"
+                        BorderBrush="#686868"
+                        BorderThickness="3"
+                        Background="#D9D9D9"
+                        MinHeight="200" Width="491" Height="465"
+                        ClipToBounds="True">
+                    <!-- Ensures content respects Border's corners -->
+
+                    <TextBox x:Name="FunctionTextBlock"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             TextWrapping="Wrap"
+                             FontFamily="Consolas"
+                             FontSize="14"
+                             Background="Transparent" 
+                             Foreground="#000000"
+                             BorderThickness="0"
+                             Padding="10"
+                             MinHeight="200" Width="491" Height="465"
+                             TextChanged="FunctionTextBox_TextChanged"/>
+                </Border>
+            </ScrollViewer>
 
         </Grid>
 
