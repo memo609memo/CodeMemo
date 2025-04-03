@@ -542,11 +542,18 @@ namespace CodeMemo
                 {
                     string newFunctionName = inputDialog.newBoxName;
 
+                    // Check if the new function name already exists under the selected language
+                    string selectedLanguage = GetSelectedLanguage();
+                    if (languageData.Languages.ContainsKey(selectedLanguage) && languageData.Languages[selectedLanguage].ContainsKey(newFunctionName))
+                    {
+                        MessageBox.Show($"Function '{newFunctionName}' already exists under language '{selectedLanguage}'. Please choose a different name.", "Rename Function", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
                     // Update the function name in the UI
                     functionLabel.Text = newFunctionName;
 
                     // Update the function in the language data
-                    string selectedLanguage = GetSelectedLanguage();
                     if (languageData.Languages.ContainsKey(selectedLanguage))
                     {
                         var functions = languageData.Languages[selectedLanguage];
