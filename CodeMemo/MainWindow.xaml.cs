@@ -16,6 +16,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Threading;
 
+
 namespace CodeMemo
 {
 
@@ -41,11 +42,20 @@ namespace CodeMemo
         //Main Funcs
         private string vaultFilePath = "vault.json";
         private LanguageData languageData = new LanguageData();
+        private GlobalHotkeyManager hotkeyManager;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadLanguages();
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            hotkeyManager = new GlobalHotkeyManager(this);
+            hotkeyManager.HotKeyPressed += HotkeyManager_HotKeyPressed;
+            RegisterHotKeys();
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -58,6 +68,92 @@ namespace CodeMemo
             this.Close();
         }
 
+
+        private void RegisterHotKeys()
+        {
+            int id = 1;
+            foreach (var language in languageData.Languages.Values)
+            {
+                foreach (var function in language.Values)
+                {
+                    if (function.Keybinds.Count > 0)
+                    {
+                        ModifierKeys modifiers = 0;
+                        Key key = Key.None;
+
+                        foreach (var keybind in function.Keybinds)
+                        {
+                            if (Enum.TryParse(keybind, out Key parsedKey))
+                            {
+                                if (parsedKey == Key.LeftCtrl || parsedKey == Key.RightCtrl)
+                                {
+                                    modifiers |= ModifierKeys.Control;
+                                }
+                                else if (parsedKey == Key.LeftShift || parsedKey == Key.RightShift)
+                                {
+                                    modifiers |= ModifierKeys.Shift;
+                                }
+                                else if (parsedKey == Key.LeftAlt || parsedKey == Key.RightAlt)
+                                {
+                                    modifiers |= ModifierKeys.Alt;
+                                }
+                                else if (parsedKey == Key.LWin || parsedKey == Key.RWin)
+                                {
+                                    modifiers |= ModifierKeys.Windows;
+                                }
+                                else
+                                {
+                                    key = parsedKey;
+                                }
+                            }
+                        }
+
+                        if (key != Key.None)
+                        {
+                            hotkeyManager.RegisterHotKey(id, modifiers, key);
+                            Debug.WriteLine($"Registered hotkey: id={id}, modifiers={modifiers}, key={key}");
+                            id++;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void UnregisterHotKeys()
+        {
+            hotkeyManager.UnregisterHotKey(1);
+        }
+
+
+
+
+        private void HotkeyManager_HotKeyPressed(int id)
+        {
+            Debug.WriteLine($"HotkeyManager_HotKeyPressed: id={id}");
+            int currentId = 1;
+            foreach (var language in languageData.Languages.Values)
+            {
+                foreach (var function in language.Values)
+                {
+                    if (function.Keybinds.Count > 0)
+                    {
+                        if (currentId == id)
+                        {
+                            Debug.WriteLine($"Inserting text block for function: {function.Block}");
+                            hotkeyManager.InsertTextBlock(function.Block);
+                            return;
+                        }
+                        currentId++;
+                    }
+                }
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            UnregisterHotKeys();
+            base.OnClosed(e);
+        }
 
 
 
@@ -675,14 +771,14 @@ namespace CodeMemo
                             if (functionData != null)
                             {
                                 // Update the "Block" key in the dictionary with the new value
-                                functionData.Block = FunctionTextBlock.Text;
+                                functionData.Block = FunctionTextBlock.Text.ToUpper();
                             }
                             else
                             {
                                 // If it's not a FunctionData, initialize it as one
                                 languageData.Languages[lang][func] = new FunctionData
                                 {
-                                    Block = FunctionTextBlock.Text,
+                                    Block = FunctionTextBlock.Text.ToUpper(),
                                     Keybinds = new List<string>()
                                 };
                             }
@@ -781,7 +877,7 @@ namespace CodeMemo
                         if (functionData != null)
                         {
                             // Update the "Block" key in the FunctionData with the new value
-                            functionData.Block = FunctionTextBlock.Text;
+                            functionData.Block = FunctionTextBlock.Text.ToUpper();
                             Trace.WriteLine($"Updated Block text: {functionData.Block}");
                         }
                         else
@@ -789,7 +885,7 @@ namespace CodeMemo
                             // If it's not a FunctionData, initialize it as one
                             languageData.Languages[selectedLanguage][functionName] = new FunctionData
                             {
-                                Block = FunctionTextBlock.Text,
+                                Block = FunctionTextBlock.Text.ToUpper(),
                                 Keybinds = new List<string>()
                             };
                             Trace.WriteLine($"Initialized new function data with Block text: {FunctionTextBlock.Text}");
