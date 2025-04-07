@@ -16,6 +16,7 @@
     <None Remove="Images\keybindButton.PNG" />
     <None Remove="Images\selectedButton.PNG" />
     <None Remove="Images\unselectedButton.PNG" />
+    <None Remove="Sounds\click.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +34,9 @@
     <Resource Include="Images\keybindButton.PNG" />
     <Resource Include="Images\selectedButton.PNG" />
     <Resource Include="Images\unselectedButton.PNG" />
+    <Content Include="Sounds\click.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

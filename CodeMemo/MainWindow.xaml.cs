@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Threading;
+using System.Media;
 
 
 namespace CodeMemo
@@ -43,6 +44,8 @@ namespace CodeMemo
         private string vaultFilePath = "vault.json";
         private LanguageData languageData = new LanguageData();
         private GlobalHotkeyManager hotkeyManager;
+        SoundPlayer player = new SoundPlayer("Sounds/click.wav");
+        //player.Play();
 
         public MainWindow()
         {
@@ -164,7 +167,7 @@ namespace CodeMemo
         {
             InputDialog inputDialog = new InputDialog(languageData.Languages.Keys.ToList());
             bool? result = inputDialog.ShowDialog();
-
+            player.Play();
             if (result == true)
             {
                 string languageName = inputDialog.newBoxName;
@@ -174,6 +177,7 @@ namespace CodeMemo
 
         private void CreateLanguageBox(string languageName)
         {
+            
             if (!languageData.Languages.ContainsKey(languageName))
             {
                 languageData.Languages[languageName] = new Dictionary<string, FunctionData>();
@@ -234,6 +238,7 @@ namespace CodeMemo
 
             languageBoxContent.MouseLeftButtonDown += (s, e) =>
             {
+                player.Play();
                 FunctionTextScrollViewer.Visibility = Visibility.Hidden;
                 KeybindsScrollViewer.Visibility = Visibility.Hidden; // Hide the keybinds UI
 
@@ -559,6 +564,7 @@ namespace CodeMemo
 
             functionBoxContent.MouseLeftButtonDown += (s, e) =>
             {
+                player.Play();
                 foreach (Grid functionBox in FunctionsStackPanel.Children.OfType<Grid>())
                 {
                     Image image = functionBox.Children.OfType<Image>().FirstOrDefault();
@@ -983,6 +989,7 @@ namespace CodeMemo
 
         private void StartKeybindButton_Click(object sender, RoutedEventArgs e)
         {
+            player.Play();
             currentKeybind.Clear();
             KeybindsStackPanel.Children.Clear();
             KeybindsStackPanel.Children.Add(TimerTextBlock); // Add the TimerTextBlock

@@ -4,11 +4,16 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Diagnostics;
+using System.Media;
 
 namespace CodeMemo
 {
     public class GlobalHotkeyManager
     {
+
+        SoundPlayer player = new SoundPlayer("Sounds/click.wav");
+        //player.Play();
+
         private const int MOD_ALT = 0x1;
         private const int MOD_CONTROL = 0x2;
         private const int MOD_SHIFT = 0x4;
@@ -137,63 +142,64 @@ namespace CodeMemo
         }
 
         public async void InsertTextBlock(string text)
-{
-    Debug.WriteLine($"InsertTextBlock called with text: {text}");
+        {
+            player.Play();
+            Debug.WriteLine($"InsertTextBlock called with text: {text}");
 
-    // Convert text to uppercase
-    text = text;
+            // Convert text to uppercase
+            text = text;
 
-    // Copy text to clipboard
-    Clipboard.SetText(text);
+            // Copy text to clipboard
+            Clipboard.SetText(text);
 
-    // Introduce a delay before starting the process
-    await Task.Delay(200); // 200 milliseconds delay
+            // Introduce a delay before starting the process
+            await Task.Delay(200); // 200 milliseconds delay
 
-    // Get the handle of the currently active window
-    IntPtr activeWindowHandle = GetForegroundWindow();
-    Debug.WriteLine($"Active window handle: {activeWindowHandle}");
+            // Get the handle of the currently active window
+            IntPtr activeWindowHandle = GetForegroundWindow();
+            Debug.WriteLine($"Active window handle: {activeWindowHandle}");
 
-    // Bring the target window (e.g., Notepad) to the foreground
-    if (activeWindowHandle != IntPtr.Zero)
-    {
-        SetForegroundWindow(activeWindowHandle);
-        Thread.Sleep(100);
-    }
+            // Bring the target window (e.g., Notepad) to the foreground
+            if (activeWindowHandle != IntPtr.Zero)
+            {
+                SetForegroundWindow(activeWindowHandle);
+                Thread.Sleep(100);
+            }
 
-    // Simulate Ctrl+V to paste the clipboard content
-    INPUT[] inputs = new INPUT[4];
+            // Simulate Ctrl+V to paste the clipboard content
+            INPUT[] inputs = new INPUT[4];
 
-    // Press Ctrl
-    inputs[0].type = INPUT_KEYBOARD;
-    inputs[0].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
-    inputs[0].u.ki.dwFlags = 0;
+            // Press Ctrl
+            inputs[0].type = INPUT_KEYBOARD;
+            inputs[0].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
+            inputs[0].u.ki.dwFlags = 0;
 
-    // Press V
-    inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
-    inputs[1].u.ki.dwFlags = 0;
+            // Press V
+            inputs[1].type = INPUT_KEYBOARD;
+            inputs[1].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
+            inputs[1].u.ki.dwFlags = 0;
 
-    // Release V
-    inputs[2].type = INPUT_KEYBOARD;
-    inputs[2].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
-    inputs[2].u.ki.dwFlags = KEYEVENTF_KEYUP;
+            // Release V
+            inputs[2].type = INPUT_KEYBOARD;
+            inputs[2].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
+            inputs[2].u.ki.dwFlags = KEYEVENTF_KEYUP;
 
-    // Release Ctrl
-    inputs[3].type = INPUT_KEYBOARD;
-    inputs[3].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
-    inputs[3].u.ki.dwFlags = KEYEVENTF_KEYUP;
+            // Release Ctrl
+            inputs[3].type = INPUT_KEYBOARD;
+            inputs[3].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
+            inputs[3].u.ki.dwFlags = KEYEVENTF_KEYUP;
 
-    Debug.WriteLine("Sending Ctrl+V to paste clipboard content");
-    uint result = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
-    if (result == 0)
-    {
-        uint error = GetLastError();
-        Debug.WriteLine($"SendInput failed with error code: {error}");
-    }
-    else
-    {
-        Debug.WriteLine($"SendInput result: {result}");
-    }
-}
+            Debug.WriteLine("Sending Ctrl+V to paste clipboard content");
+            uint result = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            if (result == 0)
+            {
+                uint error = GetLastError();
+                Debug.WriteLine($"SendInput failed with error code: {error}");
+            }
+            else
+            {
+                Debug.WriteLine($"SendInput result: {result}");
+            }
+        }
     }
 }
