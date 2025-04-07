@@ -11,7 +11,9 @@
   <ItemGroup>
     <None Remove="Fonts\Kalam-Regular.ttf" />
     <None Remove="Images\BG.PNG" />
+    <None Remove="Images\codememologo.ico" />
     <None Remove="Images\createButton.PNG" />
+    <None Remove="Images\keybindButton.PNG" />
     <None Remove="Images\selectedButton.PNG" />
     <None Remove="Images\unselectedButton.PNG" />
   </ItemGroup>
@@ -26,7 +28,9 @@
   <ItemGroup>
     <Resource Include="Fonts\Kalam-Regular.ttf" />
     <Resource Include="Images\BG.PNG" />
+    <Resource Include="Images\codememologo.ico" />
     <Resource Include="Images\createButton.PNG" />
+    <Resource Include="Images\keybindButton.PNG" />
     <Resource Include="Images\selectedButton.PNG" />
     <Resource Include="Images\unselectedButton.PNG" />
   </ItemGroup>

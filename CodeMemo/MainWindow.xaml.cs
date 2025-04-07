@@ -1056,7 +1056,7 @@ namespace CodeMemo
 
             Image keyImage = new Image
             {
-                Source = new BitmapImage(new Uri("Images/unselectedButton.PNG", UriKind.Relative)),
+                Source = new BitmapImage(new Uri("Images/keybindButton.PNG", UriKind.Relative)),
                 Height = 34,
                 Width = 124
             };
