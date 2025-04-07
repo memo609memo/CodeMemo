@@ -137,57 +137,63 @@ namespace CodeMemo
         }
 
         public async void InsertTextBlock(string text)
-        {
-            Debug.WriteLine($"InsertTextBlock called with text: {text}");
+{
+    Debug.WriteLine($"InsertTextBlock called with text: {text}");
 
-            // Convert text to uppercase
-            text = text.ToUpper();
+    // Convert text to uppercase
+    text = text;
 
-            // Introduce a delay before starting the process
-            await Task.Delay(200); // 200 milliseconds delay
+    // Copy text to clipboard
+    Clipboard.SetText(text);
 
-            // Get the handle of the currently active window
-            IntPtr activeWindowHandle = GetForegroundWindow();
-            Debug.WriteLine($"Active window handle: {activeWindowHandle}");
+    // Introduce a delay before starting the process
+    await Task.Delay(200); // 200 milliseconds delay
 
-            // Bring the target window (e.g., Notepad) to the foreground
-            if (activeWindowHandle != IntPtr.Zero)
-            {
-                SetForegroundWindow(activeWindowHandle);
-                Thread.Sleep(100);
-            }
+    // Get the handle of the currently active window
+    IntPtr activeWindowHandle = GetForegroundWindow();
+    Debug.WriteLine($"Active window handle: {activeWindowHandle}");
 
-            foreach (char c in text)
-            {
-                ushort vkCode = (ushort)KeyInterop.VirtualKeyFromKey(KeyInterop.KeyFromVirtualKey((int)c));
-                INPUT[] inputs = new INPUT[2];
+    // Bring the target window (e.g., Notepad) to the foreground
+    if (activeWindowHandle != IntPtr.Zero)
+    {
+        SetForegroundWindow(activeWindowHandle);
+        Thread.Sleep(100);
+    }
 
-                inputs[0].type = INPUT_KEYBOARD;
-                inputs[0].u.ki.wVk = vkCode;
-                inputs[0].u.ki.wScan = 0;
-                inputs[0].u.ki.dwFlags = 0;
-                inputs[0].u.ki.time = 0;
-                inputs[0].u.ki.dwExtraInfo = IntPtr.Zero;
+    // Simulate Ctrl+V to paste the clipboard content
+    INPUT[] inputs = new INPUT[4];
 
-                inputs[1].type = INPUT_KEYBOARD;
-                inputs[1].u.ki.wVk = vkCode;
-                inputs[1].u.ki.wScan = 0;
-                inputs[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
-                inputs[1].u.ki.time = 0;
-                inputs[1].u.ki.dwExtraInfo = IntPtr.Zero;
+    // Press Ctrl
+    inputs[0].type = INPUT_KEYBOARD;
+    inputs[0].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
+    inputs[0].u.ki.dwFlags = 0;
 
-                Debug.WriteLine($"Sending input: {c} (vkCode: 0x{vkCode:X})");
-                uint result = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
-                if (result == 0)
-                {
-                    uint error = GetLastError();
-                    Debug.WriteLine($"SendInput failed with error code: {error}");
-                }
-                else
-                {
-                    Debug.WriteLine($"SendInput result: {result}");
-                }
-            }
-        }
+    // Press V
+    inputs[1].type = INPUT_KEYBOARD;
+    inputs[1].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
+    inputs[1].u.ki.dwFlags = 0;
+
+    // Release V
+    inputs[2].type = INPUT_KEYBOARD;
+    inputs[2].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.V);
+    inputs[2].u.ki.dwFlags = KEYEVENTF_KEYUP;
+
+    // Release Ctrl
+    inputs[3].type = INPUT_KEYBOARD;
+    inputs[3].u.ki.wVk = (ushort)KeyInterop.VirtualKeyFromKey(Key.LeftCtrl);
+    inputs[3].u.ki.dwFlags = KEYEVENTF_KEYUP;
+
+    Debug.WriteLine("Sending Ctrl+V to paste clipboard content");
+    uint result = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+    if (result == 0)
+    {
+        uint error = GetLastError();
+        Debug.WriteLine($"SendInput failed with error code: {error}");
+    }
+    else
+    {
+        Debug.WriteLine($"SendInput result: {result}");
+    }
+}
     }
 }

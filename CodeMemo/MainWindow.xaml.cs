@@ -771,14 +771,14 @@ namespace CodeMemo
                             if (functionData != null)
                             {
                                 // Update the "Block" key in the dictionary with the new value
-                                functionData.Block = FunctionTextBlock.Text.ToUpper();
+                                functionData.Block = FunctionTextBlock.Text;
                             }
                             else
                             {
                                 // If it's not a FunctionData, initialize it as one
                                 languageData.Languages[lang][func] = new FunctionData
                                 {
-                                    Block = FunctionTextBlock.Text.ToUpper(),
+                                    Block = FunctionTextBlock.Text,
                                     Keybinds = new List<string>()
                                 };
                             }
@@ -877,7 +877,7 @@ namespace CodeMemo
                         if (functionData != null)
                         {
                             // Update the "Block" key in the FunctionData with the new value
-                            functionData.Block = FunctionTextBlock.Text.ToUpper();
+                            functionData.Block = FunctionTextBlock.Text;
                             Trace.WriteLine($"Updated Block text: {functionData.Block}");
                         }
                         else
@@ -885,7 +885,7 @@ namespace CodeMemo
                             // If it's not a FunctionData, initialize it as one
                             languageData.Languages[selectedLanguage][functionName] = new FunctionData
                             {
-                                Block = FunctionTextBlock.Text.ToUpper(),
+                                Block = FunctionTextBlock.Text,
                                 Keybinds = new List<string>()
                             };
                             Trace.WriteLine($"Initialized new function data with Block text: {FunctionTextBlock.Text}");
